@@ -26,7 +26,26 @@ enum class Solver {
         }
     },
     SIMULATED_ANNEALING{
+
+        // https://stats.stackexchange.com/questions/340626/simulated-annealing-for-least-squares-linear-regression
+        // https://stats.stackexchange.com/questions/28946/what-does-the-rta-b-function-do-in-r
         override fun solve(points: List<Point>): LineSolution {
+
+            val degreesOfFreedom = points.count() - 2
+            val scale = 0.1
+
+            var bestFit = LineSolution(0.0,0.0)
+            var meanSquareErrorBest = Double.MAX_VALUE
+
+            fun currentLoss() = points.map { bestFit.m  }
+
+            // kick off temperature from 120.0 down to 40.0 at step -.005
+            generateSequence(120.0) { it - .005 }.takeWhile { it >= 40.0 }
+                    .forEach { temp ->
+                        //val proposedM
+                    }
+
+
             TODO("not implemented")
         }
     },
@@ -62,6 +81,7 @@ enum class Solver {
                 m -= learningRate * dM
                 b -= learningRate * dB
 
+                // only animate once every 10K iterations
                 if (epoch % 10000 == 0)
                     currentLine.set(LineSolution(m,b))
             }
