@@ -3,11 +3,34 @@
 enum class Solver {
 
     OLS {
+
+        // ported from https://github.com/chethangn/SimpleLinearRegression/blob/master/SimpleLinearRegression.py
         override fun solve(points: List<Point>): LineSolution {
 
-            return LineSolution(12.0, 2.0)
+            // number of samples
+            val n = points.size.toDouble()
+
+            // averages of x and y
+            val meanX = points.asSequence().map { it.x }.average()
+            val meanY = points.asSequence().map { it.y }.average()
+
+            // calculating cross-deviation and deviation about x
+            val ssXy = points.asSequence().map { (x,y) -> (x*y) - (n*meanY*meanX) }.sum()
+            val ssXx = points.asSequence().map { (x,_) -> (x*x) - (n*meanX*meanX) }.sum()
+
+            // calculating regression coefficients
+            val b1 = ssXy / ssXx
+            val b0 = meanY - (b1*meanX)
+
+            return LineSolution(b1,b0).also { currentLine.set(it) }
         }
     },
+    SIMULATED_ANNEALING{
+        override fun solve(points: List<Point>): LineSolution {
+            TODO("not implemented")
+        }
+    },
+
     GRADIENT_DESCENT {
 
         override fun solve(points: List<Point>): LineSolution {
@@ -51,7 +74,7 @@ enum class Solver {
 
     abstract fun solve(points: List<Point>): LineSolution
 }
-class Point(val x: Double, val y: Double) {
+data class Point(val x: Double, val y: Double) {
     constructor(x: Int, y: Int): this(x.toDouble(), y.toDouble())
 }
 class LineSolution(val m: Double, val b: Double) {

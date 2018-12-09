@@ -5,5 +5,5 @@ val points = URL("https://tinyurl.com/yaxgfjzt")
         .asSequence()
         .filter { it.isNotEmpty() }
         .map { it.split(",") }
-        .map { Point(it[0].toDouble(), it[1].toDouble()) }
+        .map { (x,y) ->  Point(x.toDouble(), y.toDouble()) }
         .toList()

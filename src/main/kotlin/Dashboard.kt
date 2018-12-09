@@ -12,7 +12,7 @@ fun main(args: Array<String>) = Application.launch(DemoApp::class.java, *args)
 
 class DemoApp: App(DemoView::class)
 
-val currentLine = SimpleObjectProperty<LineSolution>()
+val currentLine = SimpleObjectProperty<LineSolution?>()
 
 class DemoView: View() {
 
@@ -24,6 +24,8 @@ class DemoView: View() {
         val mLabelText = SimpleStringProperty()
         val bLabelText = SimpleStringProperty()
 
+        val selectedSolver = SimpleObjectProperty<Solver>()
+
         left = form {
             fieldset {
                 field("m-value") {
@@ -31,6 +33,11 @@ class DemoView: View() {
                 }
                 field("b-value") {
                     label(bLabelText)
+                }
+            }
+            fieldset {
+                field("Solver") {
+                    combobox(selectedSolver, Solver.values().asList().observable())
                 }
             }
         }
@@ -70,8 +77,9 @@ class DemoView: View() {
                         }
                     }
 
-                    Solver.GRADIENT_DESCENT.solve(points)
-                    animationQueue.play()
+                    selectedSolver.onChange {
+                        it?.solve(points)?.also { animationQueue.play() }
+                    }
                 }
             }
         }
