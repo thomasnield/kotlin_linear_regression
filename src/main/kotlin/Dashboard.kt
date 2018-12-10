@@ -78,7 +78,11 @@ class DemoView: View() {
                     }
 
                     selectedSolver.onChange {
-                        it?.solve(points)?.also { animationQueue.play() }
+                        animationQueue.children.clear()
+
+                        it?.solve(points)?.also {
+                            animationQueue.play()
+                        }
                     }
                 }
             }
