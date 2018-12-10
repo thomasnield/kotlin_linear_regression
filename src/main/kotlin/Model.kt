@@ -57,10 +57,10 @@ enum class Solver {
                                 weightedCoinFlip(exp((-(sumOfSquaredError - bestSumOfSquaredError)) / temp))) {
 
                             currentFit = LineSolution(proposedM, proposedB)
-
-                            if (index % 500 == 0)
-                                currentLine.set(bestFit)
                         }
+                        if (index % 500 == 0 && currentLine.get () != bestFit)
+                            currentLine.set(bestFit)
+
                         if (sumOfSquaredError < bestSumOfSquaredError) {
                             bestSumOfSquaredError = sumOfSquaredError
                             bestFit = currentFit
