@@ -38,6 +38,7 @@ enum class Solver {
             val scale = 0.1
 
             val tDistribution = TDistribution(3.0)
+            var currentFit = LineSolution(0.0,0.0)
             var bestFit = LineSolution(0.0,0.0)
             var bestSumOfSquaredError = Double.MAX_VALUE
 
@@ -47,8 +48,8 @@ enum class Solver {
                     .withIndex()
                     .forEach { (index,temp) ->
 
-                        val proposedM = bestFit.m + scale * tDistribution.sample()
-                        val proposedB = bestFit.b + scale * tDistribution.sample()
+                        val proposedM = currentFit.m + scale * tDistribution.sample()
+                        val proposedB = currentFit.b + scale * tDistribution.sample()
 
                         val yPredictions = points.map { (proposedM * it.x) + proposedB }
                         val sumOfSquaredError = points.map { it.y }.zip(yPredictions).map { (yActual, yPredicted) -> (yPredicted-yActual).pow(2) }.sum() / degreesOfFreedom
@@ -56,16 +57,19 @@ enum class Solver {
                         if (sumOfSquaredError < bestSumOfSquaredError ||
                                 weightedCoinFlip(exp((-(sumOfSquaredError - bestSumOfSquaredError)) / temp))) {
 
-                            bestFit = LineSolution(proposedM, proposedB)
-                            bestSumOfSquaredError = sumOfSquaredError
+                            currentFit = LineSolution(proposedM, proposedB)
 
                             if (index % 500 == 0)
                                 currentLine.set(bestFit)
                         }
+                        if (sumOfSquaredError < bestSumOfSquaredError) {
+                            bestSumOfSquaredError = sumOfSquaredError
+                            bestFit = currentFit
+                        }    
                     }
 
             currentLine.set(bestFit)
-            return bestFit
+            return currentFit
         }
     },
 
