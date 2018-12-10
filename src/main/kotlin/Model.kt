@@ -1,4 +1,7 @@
-
+import koma.pow
+import org.apache.commons.math3.distribution.TDistribution
+import org.nield.kotlinstatistics.weightedCoinFlip
+import kotlin.math.exp
 
 enum class Solver {
 
@@ -34,19 +37,35 @@ enum class Solver {
             val degreesOfFreedom = points.count() - 2
             val scale = 0.1
 
+            val tDistribution = TDistribution(3.0)
             var bestFit = LineSolution(0.0,0.0)
-            var meanSquareErrorBest = Double.MAX_VALUE
+            var bestSumOfSquaredError = Double.MAX_VALUE
 
-            fun currentLoss() = points.map { bestFit.m  }
 
-            // kick off temperature from 120.0 down to 40.0 at step -.005
-            generateSequence(120.0) { it - .005 }.takeWhile { it >= 40.0 }
-                    .forEach { temp ->
-                        //val proposedM
+            // kick off temperature from 120.0 down to 0.0 at step -.005
+            generateSequence(120.0) { it - .005 }.takeWhile { it >= 0.0 }
+                    .withIndex()
+                    .forEach { (index,temp) ->
+
+                        val proposedM = bestFit.m + scale * tDistribution.sample()
+                        val proposedB = bestFit.b + scale * tDistribution.sample()
+
+                        val yPredictions = points.map { (proposedM * it.x) + proposedB }
+                        val sumOfSquaredError = points.map { it.y }.zip(yPredictions).map { (yActual, yPredicted) -> (yPredicted-yActual).pow(2) }.sum() / degreesOfFreedom
+
+                        if (sumOfSquaredError < bestSumOfSquaredError ||
+                                weightedCoinFlip(exp((-(sumOfSquaredError - bestSumOfSquaredError)) / temp))) {
+
+                            bestFit = LineSolution(proposedM, proposedB)
+                            bestSumOfSquaredError = sumOfSquaredError
+
+                            if (index % 500 == 0)
+                                currentLine.set(bestFit)
+                        }
                     }
 
-
-            TODO("not implemented")
+            currentLine.set(bestFit)
+            return bestFit
         }
     },
 
@@ -81,8 +100,8 @@ enum class Solver {
                 m -= learningRate * dM
                 b -= learningRate * dB
 
-                // only animate once every 10K iterations
-                if (epoch % 10000 == 0)
+                // only animate once every 30K iterations
+                if (epoch % 30000 == 0)
                     currentLine.set(LineSolution(m,b))
             }
             currentLine.set(LineSolution(m,b))
