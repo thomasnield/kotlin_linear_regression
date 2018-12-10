@@ -34,7 +34,6 @@ enum class Solver {
         // https://stats.stackexchange.com/questions/28946/what-does-the-rta-b-function-do-in-r
         override fun solve(points: List<Point>): LineSolution {
 
-            val degreesOfFreedom = points.count() - 2
             val scale = 0.1
 
             val tDistribution = TDistribution(3.0)
@@ -52,7 +51,7 @@ enum class Solver {
                         val proposedB = currentFit.b + scale * tDistribution.sample()
 
                         val yPredictions = points.map { (proposedM * it.x) + proposedB }
-                        val sumOfSquaredError = points.map { it.y }.zip(yPredictions).map { (yActual, yPredicted) -> (yPredicted-yActual).pow(2) }.sum() / degreesOfFreedom
+                        val sumOfSquaredError = points.map { it.y }.zip(yPredictions).map { (yActual, yPredicted) -> (yPredicted-yActual).pow(2) }.sum()
 
                         if (sumOfSquaredError < bestSumOfSquaredError ||
                                 weightedCoinFlip(exp((-(sumOfSquaredError - bestSumOfSquaredError)) / temp))) {
