@@ -126,7 +126,11 @@ enum class Solver {
                     }
 
             currentLine.set(bestFit)
-            println(bestFit.pctUnderCurve)
+            bestFit.apply {
+                println("${ pts.count { evaluate(it.x) >= it.y }}/${pts.count()}")
+                println(bestFit.pctUnderCurve)
+            }
+
             return currentFit
         }
     },
