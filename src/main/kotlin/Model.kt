@@ -79,7 +79,7 @@ enum class Solver {
         override fun solve(points: List<Point>): LineSolution {
 
             val scale = 0.1
-            val underCurveTarget = .90
+            val underCurveTarget = .80
 
             val tDistribution = TDistribution(3.0)
             var currentFit = LineSolution(0.0,0.0, points)
