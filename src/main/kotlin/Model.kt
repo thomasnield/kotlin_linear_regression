@@ -89,7 +89,7 @@ enum class Solver {
             var bestPctUnderCurve = Double.MAX_VALUE
 
             // kick off temperature from 120.0 down to 0.0 at step -.005
-            generateSequence(120.0) { it - .0005 }.takeWhile { it >= 0.0 }
+            generateSequence(120.0) { it - .005 }.takeWhile { it >= 0.0 }
                     .withIndex()
                     .forEach { (index,temp) ->
 
@@ -114,7 +114,6 @@ enum class Solver {
                                 bestFit = currentFit
                                 true
                             }
-                            //bestTargetLoss >= .80 && targetLoss < .80 && fitLoss < bestFitLoss -> weightedCoinFlip(exp((-(targetLoss - bestTargetLoss)) / temp))
                             bestPctUnderCurve >= underCurveTarget && pctUnderCurve >= underCurveTarget && fitLoss > bestFitLoss -> weightedCoinFlip(exp((-(fitLoss - bestFitLoss)) / temp))
                             else -> false
                         }
