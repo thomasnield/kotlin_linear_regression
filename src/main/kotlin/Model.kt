@@ -79,7 +79,7 @@ enum class Solver {
         override fun solve(points: List<Point>): LineSolution {
 
             val scale = 0.1
-            val underCurveTarget = .80
+            val underCurveTarget = .90
 
             val tDistribution = TDistribution(3.0)
             var currentFit = LineSolution(0.0,0.0, points)
@@ -104,18 +104,18 @@ enum class Solver {
 
                         val takeMove = when {
 
-                            bestPctUnderCurve < .80 && pctUnderCurve > bestPctUnderCurve -> {
+                            bestPctUnderCurve < underCurveTarget && pctUnderCurve > bestPctUnderCurve -> {
                                 bestPctUnderCurve = pctUnderCurve
                                 bestFit = currentFit
                                 true
                             }
-                            bestPctUnderCurve >= .80 && pctUnderCurve >= .80 && fitLoss < bestFitLoss -> {
+                            bestPctUnderCurve >= underCurveTarget && pctUnderCurve >= underCurveTarget && fitLoss < bestFitLoss -> {
                                 bestFitLoss = fitLoss
                                 bestFit = currentFit
                                 true
                             }
                             //bestTargetLoss >= .80 && targetLoss < .80 && fitLoss < bestFitLoss -> weightedCoinFlip(exp((-(targetLoss - bestTargetLoss)) / temp))
-                            bestPctUnderCurve >= .80 && pctUnderCurve >= .80 && fitLoss > bestFitLoss -> weightedCoinFlip(exp((-(fitLoss - bestFitLoss)) / temp))
+                            bestPctUnderCurve >= underCurveTarget && pctUnderCurve >= underCurveTarget && fitLoss > bestFitLoss -> weightedCoinFlip(exp((-(fitLoss - bestFitLoss)) / temp))
                             else -> false
                         }
 
@@ -124,11 +124,6 @@ enum class Solver {
                         }
                         if (index % 500 == 0 && currentLine.get () != bestFit)
                             currentLine.set(bestFit)
-
-/*                        if (fitLoss < bestFitLoss) {
-                            bestFitLoss = fitLoss
-                            bestFit = currentFit
-                        }*/
                     }
 
             currentLine.set(bestFit)
