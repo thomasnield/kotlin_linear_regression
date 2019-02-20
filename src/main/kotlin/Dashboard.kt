@@ -24,6 +24,9 @@ class DemoView: View() {
         val mLabelText = SimpleStringProperty()
         val bLabelText = SimpleStringProperty()
 
+        val pctPtsUnderCurveText = SimpleStringProperty()
+        val lossText = SimpleStringProperty()
+
         val selectedSolver = SimpleObjectProperty<Solver>()
 
         left = form {
@@ -38,6 +41,14 @@ class DemoView: View() {
             fieldset {
                 field("Solver") {
                     combobox(selectedSolver, Solver.values().asList().observable())
+                }
+            }
+            fieldset {
+                field("Loss") {
+                    label(lossText)
+                }
+                field("% Points Under Curve") {
+                    label(pctPtsUnderCurveText)
                 }
             }
         }
@@ -71,6 +82,8 @@ class DemoView: View() {
                             keyframe(1000.millis) {
                                 keyvalue(mLabelText, DecimalFormat("#.0000").format(it!!.m))
                                 keyvalue(bLabelText, DecimalFormat("#.0000").format(it.b))
+                                keyvalue(lossText, DecimalFormat("#.00").format(it.loss))
+                                keyvalue(pctPtsUnderCurveText, DecimalFormat("#.00").format(it.pctUnderCurve * 100.0))
                                 keyvalue(startPoint.YValueProperty(), it.evaluate(minX))
                                 keyvalue(endPoint.YValueProperty(), it.evaluate(maxX))
                             }
