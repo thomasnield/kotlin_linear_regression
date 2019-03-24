@@ -26,7 +26,8 @@ enum class Solver {
             val meanY = points.map { it.y.convert() }.sum() / n
 
             // calculating m
-            val m = points.map { (it.x.convert() - meanX) * (it.y.convert() - meanY) }.sum() / points.map { (it.x.convert() - meanX).pow(2) }.sum()
+            val m = points.map { (it.x.convert() - meanX) * (it.y.convert() - meanY) }.sum() /
+                    points.map { (it.x.convert() - meanX).pow(2) }.sum()
 
             // calculating b
             val b = meanY - (m * meanX)
@@ -57,7 +58,8 @@ enum class Solver {
                     bestSumOfSquaredError = sumOfSquaredError
                     currentFit = LineSolution(proposedM, proposedB, points)
 
-                    if (index % 50 == 0)
+                    // only animate every 50 iterations
+                    if (index % 500 == 0)
                         currentLine.set(currentFit)
                 }
             }
@@ -110,9 +112,11 @@ enum class Solver {
                         if (takeMove) {
                             currentFit = LineSolution(proposedM, proposedB, points)
                         }
+
+                        // only animate every 500 iterations
                         if (index % 500 == 0 && currentLine.get () != bestFit)
-                            currentLine.set(bestFit)
-                    }
+                                currentLine.set(bestFit)
+                        }
 
             currentLine.set(bestFit)
 
@@ -154,7 +158,8 @@ enum class Solver {
 
                             currentFit = LineSolution(proposedM, proposedB, points)
                         }
-                        if (index % 50 == 0 && currentLine.get () != bestFit)
+                        // only animate every 500 iterations
+                        if (index % 500 == 0 && currentLine.get () != bestFit)
                             currentLine.set(bestFit)
 
                         if (sumOfSquaredError < bestSumOfSquaredError) {
@@ -274,6 +279,8 @@ enum class Solver {
     };
 
     abstract fun solve(points: List<Point>): LineSolution
+
+    override fun toString() = name.replace("_", " ")
 }
 data class Point(val x: Double, val y: Double) {
     constructor(x: Int, y: Int): this(x.toDouble(), y.toDouble())
