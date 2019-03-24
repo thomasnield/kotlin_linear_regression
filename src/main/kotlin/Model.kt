@@ -1,31 +1,127 @@
 import koma.pow
 import org.apache.commons.math3.distribution.TDistribution
+import org.nield.kotlinstatistics.sum
 import org.nield.kotlinstatistics.weightedCoinFlip
+import java.math.MathContext
+import java.math.RoundingMode
 import kotlin.math.exp
 
 enum class Solver {
 
-    OLS {
+    ORDINARY_LEAST_SQUARES {
 
-        // ported from https://github.com/chethangn/SimpleLinearRegression/blob/master/SimpleLinearRegression.py
+
+        // great reference: https://youtu.be/Qa2APhWjQPc
         override fun solve(points: List<Point>): LineSolution {
 
+            // convert to BigDecimal for precision
+            fun Int.convert() = toBigDecimal(MathContext(4, RoundingMode.HALF_UP))
+            fun Double.convert() = toBigDecimal(MathContext(4, RoundingMode.HALF_UP))
+
             // number of samples
-            val n = points.size.toDouble()
+            val n = points.size.convert()
 
             // averages of x and y
-            val meanX = points.asSequence().map { it.x }.average()
-            val meanY = points.asSequence().map { it.y }.average()
+            val meanX = points.map { it.x.convert() }.sum() / n
+            val meanY = points.map { it.y.convert() }.sum() / n
 
-            // calculating cross-deviation and deviation about x
-            val ssXy = points.asSequence().map { (x,y) -> (x*y) - (n*meanY*meanX) }.sum()
-            val ssXx = points.asSequence().map { (x,_) -> (x*x) - (n*meanX*meanX) }.sum()
+            // calculating m
+            val m = points.map { (it.x.convert() - meanX) * (it.y.convert() - meanY) }.sum() / points.map { (it.x.convert() - meanX).pow(2) }.sum()
 
-            // calculating regression coefficients
-            val b1 = ssXy / ssXx
-            val b0 = meanY - (b1*meanX)
+            // calculating b
+            val b = meanY - (m * meanX)
 
-            return LineSolution(b1,b0, points).also { currentLine.set(it) }
+            return LineSolution(m.toDouble(),b.toDouble(), points).also { currentLine.set(it) }
+        }
+    },
+    HILL_CLIMBING {
+
+        override fun solve(points: List<Point>): LineSolution {
+
+            val scale = 0.1
+
+            val tDistribution = TDistribution(3.0)
+            var currentFit = LineSolution(0.0,0.0, points)
+            var bestSumOfSquaredError = Double.MAX_VALUE
+
+
+            repeat(24000){ index ->
+
+                val proposedM = currentFit.m + scale * tDistribution.sample()
+                val proposedB = currentFit.b + scale * tDistribution.sample()
+
+                val yPredictions = points.map { (proposedM * it.x) + proposedB }
+                val sumOfSquaredError = points.map { it.y }.zip(yPredictions).map { (yActual, yPredicted) -> (yPredicted-yActual).pow(2) }.sum()
+
+                if (sumOfSquaredError < bestSumOfSquaredError) {
+                    bestSumOfSquaredError = sumOfSquaredError
+                    currentFit = LineSolution(proposedM, proposedB, points)
+
+                    if (index % 50 == 0)
+                        currentLine.set(currentFit)
+                }
+            }
+
+            currentLine.set(currentFit)
+            return currentFit
+        }
+    },
+    HILL_CLIMBING_80_QUANTILE {
+
+        override fun solve(points: List<Point>): LineSolution {
+
+
+            val scale = 0.1
+            val underCurveTarget = .80
+
+            val tDistribution = TDistribution(3.0)
+            var currentFit = LineSolution(0.0,0.0, points)
+            var bestFit = LineSolution(0.0,0.0, points)
+
+            var bestFitLoss = Double.MAX_VALUE
+            var bestPctUnderCurve = Double.MAX_VALUE
+
+            repeat(24000) { index ->
+
+                        val proposedM = currentFit.m + scale * tDistribution.sample()
+                        val proposedB = currentFit.b + scale * tDistribution.sample()
+
+                        val yPredictions = points.map { (proposedM * it.x) + proposedB }
+
+                        val pctUnderCurve = points.map { it.y }.zip(yPredictions).count { (yActual, yPredicted) -> yPredicted >= yActual }.toDouble() / points.count().toDouble()
+
+                        val fitLoss = points.map { it.y }.zip(yPredictions).map { (yActual, yPredicted) -> (yPredicted-yActual).pow(2) }.sum()
+
+                        val takeMove = when {
+
+                            bestPctUnderCurve < underCurveTarget && pctUnderCurve > bestPctUnderCurve -> {
+                                bestPctUnderCurve = pctUnderCurve
+                                bestFit = currentFit
+                                true
+                            }
+                            bestPctUnderCurve >= underCurveTarget && pctUnderCurve >= underCurveTarget && fitLoss < bestFitLoss -> {
+                                bestFitLoss = fitLoss
+                                bestFit = currentFit
+                                true
+                            }
+                            else -> false
+                        }
+
+                        if (takeMove) {
+                            currentFit = LineSolution(proposedM, proposedB, points)
+                        }
+                        if (index % 500 == 0 && currentLine.get () != bestFit)
+                            currentLine.set(bestFit)
+                    }
+
+            currentLine.set(bestFit)
+
+            bestFit.apply {
+                println("${ pts.count { evaluate(it.x) >= it.y }}/${pts.count()}")
+                println(bestFit.pctUnderCurve)
+            }
+
+            return currentFit
         }
     },
     SIMULATED_ANNEALING{
@@ -58,13 +154,13 @@ enum class Solver {
 
                             currentFit = LineSolution(proposedM, proposedB, points)
                         }
-                        if (index % 500 == 0 && currentLine.get () != bestFit)
+                        if (index % 50 == 0 && currentLine.get () != bestFit)
                             currentLine.set(bestFit)
 
                         if (sumOfSquaredError < bestSumOfSquaredError) {
                             bestSumOfSquaredError = sumOfSquaredError
                             bestFit = currentFit
-                        }    
+                        }
                     }
 
             currentLine.set(bestFit)
@@ -72,7 +168,7 @@ enum class Solver {
         }
     },
 
-    SIMULATED_ANNEALING_WITH_TARGET{
+    SIMULATED_ANNEALING_80_QUANTILE{
 
         // https://stats.stackexchange.com/questions/340626/simulated-annealing-for-least-squares-linear-regression
         // https://stats.stackexchange.com/questions/28946/what-does-the-rta-b-function-do-in-r

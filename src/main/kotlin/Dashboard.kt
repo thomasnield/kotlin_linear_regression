@@ -91,7 +91,10 @@ class DemoView: View() {
                     }
 
                     selectedSolver.onChange {
+
                         animationQueue.children.clear()
+                        currentLine.set(LineSolution(0.0,0.0,points))
+
                         it?.solve(points)?.also {
                             animationQueue.play()
                         }
