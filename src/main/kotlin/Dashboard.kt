@@ -8,7 +8,9 @@ import tornadofx.*
 import java.text.DecimalFormat
 
 
-fun main(args: Array<String>) = Application.launch(DemoApp::class.java, *args)
+
+fun main(args: Array<String>) =
+        Application.launch(DemoApp::class.java, *args)
 
 class DemoApp: App(DemoView::class)
 
